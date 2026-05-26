@@ -1,0 +1,16 @@
+# Виртуальное окружение
+.venv/
+
+# База данных (у руководителя создастся своя)
+*.db
+
+# Python кеш
+__pycache__/
+*.pyc
+*.pyo
+
+# PyCharm
+.idea/
+
+# UV
+.python-version
