@@ -41,3 +41,4 @@ http://127.0.0.1:8000/docs
 | PUT    | /promos/{id}       | Обновить промокод               |
 | DELETE | /promos/{id}       | Удалить промокод (статус 204)   |
 | POST   | /promos/apply      | Применить промокод к корзине    |
+<img width="2346" height="1436" alt="image" src="https://github.com/user-attachments/assets/e0569ae8-a190-4069-bd80-8c0b81ea50ed" />
