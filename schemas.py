@@ -27,6 +27,7 @@ class PromoOut(BaseModel):
     valid_until_days: int
     is_active: bool
     max_uses: int
+    current_uses: int
 
     model_config = {"from_attributes": True}
 

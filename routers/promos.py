@@ -65,11 +65,22 @@ def delete_promo(promo_id: int, db: Session = Depends(get_db)):
 def apply_promo(data: schemas.ApplyRequest,
                 db: Session = Depends(get_db)):
     promo = crud.get_promo_by_code(db, data.code.upper())
+
     if not promo or not promo.is_active:
         logger.warning(f"Invalid promo attempt: {data.code}")
         raise HTTPException(status_code=400,
                             detail="Promo not found or inactive")
+
+    if promo.current_uses >= promo.max_uses:
+        raise HTTPException(status_code=400,
+                            detail="Promo usage limit reached")
+
     saved = round(data.initial_cart_sum * promo.discount_percent / 100, 2)
     final_sum = round(data.initial_cart_sum - saved, 2)
-    logger.info(f"Applied {promo.code}: saved {saved}")
+
+    promo.current_uses += 1
+    db.commit()
+
+    logger.info(f"Applied {promo.code}: saved {saved}, "
+                f"uses {promo.current_uses}/{promo.max_uses}")
     return {"final_sum": final_sum, "saved": saved}

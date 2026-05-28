@@ -10,3 +10,4 @@ class Promo(Base):
     valid_until_days = Column(Integer, nullable=False)
     is_active = Column(Boolean, default=True)
     max_uses = Column(Integer, nullable=False)
+    current_uses = Column(Integer, default=0, nullable=False)
