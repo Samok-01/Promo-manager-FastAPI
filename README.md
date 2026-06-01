@@ -11,34 +11,50 @@
 Проверил все эндпоинты через Swagger UI (/docs) и Postman — статус-коды 200, 201, 204, 400, 404 отрабатывают корректно.
 # Promo Manager API
 
-REST API для управления промокодами на FastAPI + SQLAlchemy + Pydantic.
+API для управления промокодами: создание, обновление, удаление и применение промокодов к корзине.
 
-## Стек
-- Python 3.11
-- FastAPI
-- SQLAlchemy (SQLite)
-- Pydantic v2
-- UV
+## Технологии
 
-## Установка и запуск
+* Python 3.12
+* FastAPI
+* SQLAlchemy
+* Pydantic v2
+* Docker
 
-### 1. Установить зависимости
+## Запуск через Docker
+
+```bash
+git clone https://github.com/USERNAME/promo-manager.git
+cd promo-manager
+docker-compose up --build
+```
+
+Документация API будет доступна по адресу:
+
+http://localhost:8000/docs
+
+## Локальный запуск
+
+```bash
+git clone https://github.com/USERNAME/promo-manager.git
+cd promo-manager
 uv sync
-
-### 2. Запустить сервер
 uv run uvicorn main:app --reload
+```
 
-### 3. Открыть документацию
+Документация API будет доступна по адресу:
+
 http://127.0.0.1:8000/docs
 
 ## Эндпоинты
 
-| Метод  | URL                | Описание                        |
-|--------|--------------------|---------------------------------|
-| GET    | /promos            | Список промокодов (фильтр, пагинация) |
-| GET    | /promos/{id}       | Получить по ID                  |
-| POST   | /promos            | Создать промокод (статус 201)   |
-| PUT    | /promos/{id}       | Обновить промокод               |
-| DELETE | /promos/{id}       | Удалить промокод (статус 204)   |
-| POST   | /promos/apply      | Применить промокод к корзине    |
+| Метод  | URL           | Описание                                            |
+| ------ | ------------- | --------------------------------------------------- |
+| GET    | /promos       | Получить список промокодов (фильтрация и пагинация) |
+| GET    | /promos/{id}  | Получить промокод по ID                             |
+| POST   | /promos       | Создать новый промокод                              |
+| PUT    | /promos/{id}  | Обновить промокод или изменить срок действия        |
+| DELETE | /promos/{id}  | Удалить промокод                                    |
+| POST   | /promos/apply | Применить промокод к корзине                        |
+
 <img width="2346" height="1436" alt="image" src="https://github.com/user-attachments/assets/e0569ae8-a190-4069-bd80-8c0b81ea50ed" />
