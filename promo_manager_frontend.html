@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promo Manager</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0B0D14;
+    --surface: #13151F;
+    --card: #1C1F2E;
+    --border: #252837;
+    --accent: #7C6FFF;
+    --accent-glow: rgba(124,111,255,0.15);
+    --green: #00E096;
+    --green-dim: rgba(0,224,150,0.12);
+    --red: #FF4D6A;
+    --red-dim: rgba(255,77,106,0.12);
+    --yellow: #FFB830;
+    --yellow-dim: rgba(255,184,48,0.12);
+    --blue: #38BDF8;
+    --blue-dim: rgba(56,189,248,0.12);
+    --text: #E4E6F0;
+    --muted: #6B6E85;
+    --tag-active: rgba(0,224,150,0.15);
+    --tag-inactive: rgba(255,77,106,0.15);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  /* HEADER */
+  header {
+    padding: 22px 40px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo-text p { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .api-status {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; color: var(--muted);
+    padding: 6px 12px; border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); transition: all .3s; }
+  .dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+  /* MAIN */
+  .main { max-width: 1100px; margin: 0 auto; padding: 36px 24px 0; }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 6px;
+    transition: border-color .2s;
+  }
+  .stat-card:hover { border-color: rgba(124,111,255,.3); }
+  .stat-label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .stat-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .stat-sub { font-size: 11px; color: var(--muted); }
+  .stat-accent { color: var(--accent); }
+  .stat-green { color: var(--green); }
+  .stat-yellow { color: var(--yellow); }
+  .stat-blue { color: var(--blue); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface); padding: 4px; border-radius: 12px; border: 1px solid var(--border); width: fit-content; }
+  .tab {
+    padding: 8px 20px; border-radius: 9px; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .15s; color: var(--muted); border: none;
+    background: transparent; font-family: 'Inter', sans-serif;
+  }
+  .tab.active { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+
+  /* PANEL */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* CARD */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px;
+  }
+  .card + .card { margin-top: 16px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 18px; }
+
+  /* SEARCH */
+  .search-row { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .search-wrap { position: relative; flex: 1; max-width: 280px; }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+  .search-input {
+    width: 100%; padding: 8px 12px 8px 32px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 9px; font-size: 13px; color: var(--text);
+    font-family: 'Inter', sans-serif; outline: none; transition: border-color .15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+
+  /* FILTERS */
+  .filters { display: flex; gap: 8px; align-items: center; }
+  .filter-btn {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); transition: all .15s; font-family: 'Inter', sans-serif;
+  }
+  .filter-btn.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+
+  /* FORM */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 10px 13px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 9px; font-size: 13px; color: var(--text);
+    font-family: 'Inter', sans-serif; outline: none; transition: border-color .15s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--muted); }
+
+  /* BTN */
+  .btn {
+    padding: 10px 20px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all .15s; font-family: 'Inter', sans-serif;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 7px; }
+  .btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,77,106,.2); }
+  .btn-muted { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+
+  /* PROMO LIST */
+  .promo-grid { display: flex; flex-direction: column; gap: 10px; }
+  .promo-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 11px; padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: border-color .15s, opacity .2s, transform .2s;
+  }
+  .promo-item:hover { border-color: rgba(124,111,255,.3); }
+  .promo-item.removing { opacity: 0; transform: translateX(20px); }
+  .promo-left { display: flex; align-items: center; gap: 14px; }
+  .promo-code {
+    font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600;
+    color: var(--accent); background: var(--accent-glow);
+    padding: 4px 10px; border-radius: 6px;
+  }
+  .promo-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+  .badge.active { background: var(--tag-active); color: var(--green); }
+  .badge.inactive { background: var(--tag-inactive); color: var(--red); }
+  .promo-discount { font-size: 22px; font-weight: 700; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+  .promo-right { display: flex; align-items: center; gap: 10px; }
+  .promo-actions { display: flex; gap: 6px; }
+
+  /* PROGRESS BAR */
+  .uses-bar { width: 80px; height: 4px; background: var(--border); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+  .uses-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width .3s; }
+  .uses-fill.warn { background: var(--yellow); }
+  .uses-fill.full { background: var(--red); }
+
+  /* SAVINGS DISPLAY */
+  .savings-display {
+    display: none; margin-top: 20px;
+    background: linear-gradient(135deg, rgba(124,111,255,.08), rgba(0,224,150,.05));
+    border: 1px solid rgba(124,111,255,.2); border-radius: 12px; padding: 20px 24px;
+    animation: fadeIn .3s ease;
+  }
+  .savings-display.show { display: block; }
+  .savings-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 13px; }
+  .savings-row + .savings-row { border-top: 1px solid var(--border); }
+  .savings-label { color: var(--muted); }
+  .savings-value { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px; }
+  .savings-value.highlight { color: var(--green); font-size: 20px; }
+
+  /* RESULT */
+  .result {
+    margin-top: 14px; padding: 12px 16px; border-radius: 10px;
+    display: none; font-size: 13px; line-height: 1.6; animation: fadeIn .2s ease;
+  }
+  .result.success { background: var(--green-dim); border: 1px solid rgba(0,224,150,.2); color: var(--green); display: block; }
+  .result.error { background: var(--red-dim); border: 1px solid rgba(255,77,106,.2); color: var(--red); display: block; }
+
+  /* EMPTY / LOADING */
+  .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+  .empty-icon { font-size: 32px; margin-bottom: 10px; }
+  .loading { text-align: center; padding: 30px; color: var(--muted); font-size: 13px; }
+
+  /* TOAST */
+  .toast-wrap { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
+  .toast {
+    padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    animation: slideUp .25s ease;
+    max-width: 300px;
+  }
+  .toast.success { background: #0D2E1F; border: 1px solid rgba(0,224,150,.3); color: var(--green); }
+  .toast.error { background: #2E0D15; border: 1px solid rgba(255,77,106,.3); color: var(--red); }
+  .toast.info { background: #1A1D2E; border: 1px solid rgba(124,111,255,.3); color: var(--accent); }
+
+  /* CONFIRM DIALOG */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    display: none; align-items: center; justify-content: center; z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+  .overlay.show { display: flex; }
+  .dialog {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; max-width: 360px; width: 90%;
+    animation: fadeIn .2s ease;
+  }
+  .dialog h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .dialog p { font-size: 13px; color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
+  .dialog-btns { display: flex; gap: 10px; justify-content: flex-end; }
+
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏷️</div>
+    <div class="logo-text">
+      <h1>Promo Manager</h1>
+      <p>Управление промокодами</p>
+    </div>
+  </div>
+  <div class="api-status">
+    <div class="dot" id="statusDot"></div>
+    <span id="statusText">Подключение...</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Всего промокодов</div>
+      <div class="stat-value stat-accent" id="st-total">—</div>
+      <div class="stat-sub">в базе данных</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Активных</div>
+      <div class="stat-value stat-green" id="st-active">—</div>
+      <div class="stat-sub">готовы к использованию</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Всего использований</div>
+      <div class="stat-value stat-yellow" id="st-uses">—</div>
+      <div class="stat-sub">применений промокодов</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Средняя скидка</div>
+      <div class="stat-value stat-blue" id="st-avg">—</div>
+      <div class="stat-sub">по всем промокодам</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('promos', this)">Промокоды</button>
+    <button class="tab" onclick="switchTab('create', this)">Создать</button>
+    <button class="tab" onclick="switchTab('apply', this)">Применить</button>
+  </div>
+
+  <!-- PROMOS LIST -->
+  <div class="panel active" id="tab-promos">
+    <div class="card">
+      <div class="card-title">Все промокоды</div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" type="text" id="searchInput" placeholder="Поиск по коду..." oninput="filterList()">
+        </div>
+        <div class="filters">
+          <button class="filter-btn active" onclick="setFilter(null, this)">Все</button>
+          <button class="filter-btn" onclick="setFilter(true, this)">Активные</button>
+          <button class="filter-btn" onclick="setFilter(false, this)">Неактивные</button>
+        </div>
+      </div>
+      <div class="promo-grid" id="promoList">
+        <div class="loading">Загрузка...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE -->
+  <div class="panel" id="tab-create">
+    <div class="card">
+      <div class="card-title">Новый промокод</div>
+      <div class="form-row">
+        <div class="field">
+          <label>Код промокода</label>
+          <input type="text" id="c-code" placeholder="SUMMER24">
+        </div>
+        <div class="field">
+          <label>Скидка (%)</label>
+          <input type="number" id="c-discount" placeholder="20" min="1" max="90">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Срок действия (дней)</label>
+          <input type="number" id="c-days" placeholder="30">
+        </div>
+        <div class="field">
+          <label>Макс. использований</label>
+          <input type="number" id="c-maxuses" placeholder="100">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="createPromo()">Создать промокод</button>
+      <div class="result" id="create-result"></div>
+    </div>
+  </div>
+
+  <!-- APPLY -->
+  <div class="panel" id="tab-apply">
+    <div class="card">
+      <div class="card-title">Применить скидку</div>
+      <div class="form-row">
+        <div class="field">
+          <label>Промокод</label>
+          <input type="text" id="a-code" placeholder="SUMMER24">
+        </div>
+        <div class="field">
+          <label>Сумма корзины (₸)</label>
+          <input type="number" id="a-sum" placeholder="5000">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="applyPromo()">Применить</button>
+      <div class="savings-display" id="savingsDisplay">
+        <div class="savings-row">
+          <span class="savings-label">Исходная сумма</span>
+          <span class="savings-value" id="s-original">—</span>
+        </div>
+        <div class="savings-row">
+          <span class="savings-label">Сумма со скидкой</span>
+          <span class="savings-value" id="s-final">—</span>
+        </div>
+        <div class="savings-row">
+          <span class="savings-label">Вы экономите</span>
+          <span class="savings-value highlight" id="s-saved">—</span>
+        </div>
+      </div>
+      <div class="result" id="apply-result"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- CONFIRM DIALOG -->
+<div class="overlay" id="confirmOverlay">
+  <div class="dialog">
+    <h3>Удалить промокод?</h3>
+    <p id="confirmText">Это действие нельзя отменить.</p>
+    <div class="dialog-btns">
+      <button class="btn btn-muted btn-sm" onclick="closeConfirm()">Отмена</button>
+      <button class="btn btn-danger btn-sm" id="confirmBtn">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+let allPromos = [];
+let currentFilter = null;
+let pendingDeleteId = null;
+
+// ── STATUS ──────────────────────────────────────────
+async function checkStatus() {
+  try {
+    const r = await fetch(`${API}/promos`);
+    if (r.ok) {
+      document.getElementById('statusDot').classList.add('online');
+      document.getElementById('statusText').textContent = 'API онлайн';
+    }
+  } catch {
+    document.getElementById('statusDot').classList.remove('online');
+    document.getElementById('statusText').textContent = 'API недоступен';
+  }
+}
+
+// ── TABS ─────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'promos') loadPromos();
+}
+
+// ── STATS ─────────────────────────────────────────────
+function updateStats(promos) {
+  const total = promos.length;
+  const active = promos.filter(p => p.is_active).length;
+  const uses = promos.reduce((s, p) => s + p.current_uses, 0);
+  const avg = total ? Math.round(promos.reduce((s, p) => s + p.discount_percent, 0) / total) : 0;
+  document.getElementById('st-total').textContent = total;
+  document.getElementById('st-active').textContent = active;
+  document.getElementById('st-uses').textContent = uses;
+  document.getElementById('st-avg').textContent = avg ? avg + '%' : '—';
+}
+
+// ── LOAD PROMOS ───────────────────────────────────────
+async function loadPromos() {
+  const list = document.getElementById('promoList');
+  list.innerHTML = '<div class="loading">Загрузка...</div>';
+  try {
+    const r = await fetch(`${API}/promos?limit=100`);
+    allPromos = await r.json();
+    updateStats(allPromos);
+    renderPromos();
+  } catch {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div>Сервер недоступен. Запущен ли uvicorn?</div>';
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────
+function renderPromos() {
+  const list = document.getElementById('promoList');
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  let items = allPromos;
+  if (currentFilter !== null) items = items.filter(p => p.is_active === currentFilter);
+  if (search) items = items.filter(p => p.code.toLowerCase().includes(search));
+  if (!items.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🏷️</div>Ничего не найдено</div>';
+    return;
+  }
+  list.innerHTML = items.map(p => {
+    const pct = p.max_uses ? Math.round(p.current_uses / p.max_uses * 100) : 0;
+    const fillClass = pct >= 100 ? 'full' : pct >= 70 ? 'warn' : '';
+    return `
+    <div class="promo-item" id="promo-${p.id}">
+      <div class="promo-left">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <span class="promo-code">${p.code}</span>
+            <span class="badge ${p.is_active ? 'active' : 'inactive'}">${p.is_active ? 'Активен' : 'Неактивен'}</span>
+          </div>
+          <div class="promo-meta">Срок: ${p.valid_until_days} дн. · Использований: ${p.current_uses}/${p.max_uses}</div>
+          <div class="uses-bar"><div class="uses-fill ${fillClass}" style="width:${Math.min(pct,100)}%"></div></div>
+        </div>
+      </div>
+      <div class="promo-right">
+        <div class="promo-discount">-${p.discount_percent}%</div>
+        <div class="promo-actions">
+          <button class="btn btn-sm btn-muted" onclick="toggleActive(${p.id}, ${!p.is_active})">${p.is_active ? 'Деактивировать' : 'Активировать'}</button>
+          <button class="btn btn-sm btn-danger" onclick="confirmDelete(${p.id}, '${p.code}')">Удалить</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── FILTER & SEARCH ───────────────────────────────────
+function setFilter(val, btn) {
+  currentFilter = val;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPromos();
+}
+function filterList() { renderPromos(); }
+
+// ── CREATE ────────────────────────────────────────────
+async function createPromo() {
+  const res = document.getElementById('create-result');
+  res.className = 'result';
+  const body = {
+    code: document.getElementById('c-code').value,
+    discount_percent: parseInt(document.getElementById('c-discount').value),
+    valid_until_days: parseInt(document.getElementById('c-days').value),
+    max_uses: parseInt(document.getElementById('c-maxuses').value),
+    is_active: true
+  };
+  if (!body.code || !body.discount_percent || !body.valid_until_days || !body.max_uses) {
+    toast('Заполните все поля', 'error'); return;
+  }
+  try {
+    const r = await fetch(`${API}/promos`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (r.status === 201) {
+      toast(`Промокод ${data.code} создан`, 'success');
+      ['c-code','c-discount','c-days','c-maxuses'].forEach(id => document.getElementById(id).value = '');
+      loadPromos();
+    } else {
+      toast(data.detail || 'Ошибка создания', 'error');
+    }
+  } catch {
+    toast('Сервер недоступен', 'error');
+  }
+}
+
+// ── APPLY ─────────────────────────────────────────────
+async function applyPromo() {
+  const res = document.getElementById('apply-result');
+  const display = document.getElementById('savingsDisplay');
+  res.className = 'result';
+  display.classList.remove('show');
+  const code = document.getElementById('a-code').value;
+  const sum = parseFloat(document.getElementById('a-sum').value);
+  if (!code || !sum) { toast('Введите код и сумму', 'error'); return; }
+  try {
+    const r = await fetch(`${API}/promos/apply`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ code, initial_cart_sum: sum })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      document.getElementById('s-original').textContent = sum.toLocaleString('ru') + ' ₸';
+      document.getElementById('s-final').textContent = data.final_sum.toLocaleString('ru') + ' ₸';
+      document.getElementById('s-saved').textContent = data.saved.toLocaleString('ru') + ' ₸';
+      display.classList.add('show');
+      toast(`Скидка применена — сэкономлено ${data.saved} ₸`, 'success');
+      loadPromos();
+    } else {
+      toast(data.detail || 'Промокод не найден', 'error');
+    }
+  } catch {
+    toast('Сервер недоступен', 'error');
+  }
+}
+
+// ── TOGGLE ────────────────────────────────────────────
+async function toggleActive(id, val) {
+  try {
+    await fetch(`${API}/promos/${id}`, {
+      method: 'PUT', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ is_active: val })
+    });
+    toast(val ? 'Промокод активирован' : 'Промокод деактивирован', 'info');
+    loadPromos();
+  } catch { toast('Ошибка обновления', 'error'); }
+}
+
+// ── DELETE ────────────────────────────────────────────
+function confirmDelete(id, code) {
+  pendingDeleteId = id;
+  document.getElementById('confirmText').textContent = `Промокод "${code}" будет удалён. Это действие нельзя отменить.`;
+  document.getElementById('confirmOverlay').classList.add('show');
+  document.getElementById('confirmBtn').onclick = () => deletePromo(id);
+}
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  pendingDeleteId = null;
+}
+async function deletePromo(id) {
+  closeConfirm();
+  const el = document.getElementById('promo-' + id);
+  if (el) el.classList.add('removing');
+  setTimeout(async () => {
+    try {
+      await fetch(`${API}/promos/${id}`, { method: 'DELETE' });
+      toast('Промокод удалён', 'info');
+      loadPromos();
+    } catch { toast('Ошибка удаления', 'error'); }
+  }, 200);
+}
+
+// ── TOAST ─────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ── INIT ──────────────────────────────────────────────
+checkStatus();
+loadPromos();
+</script>
+</body>
+</html>
